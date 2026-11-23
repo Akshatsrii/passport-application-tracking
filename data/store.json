@@ -1,0 +1,254 @@
+{
+  "applications": {
+    "APP-2026-88192": {
+      "id": "APP-2026-88192",
+      "applicantId": "usr_rahul_991",
+      "serviceType": "FRESH_NORMAL",
+      "bookletType": "36_PAGES",
+      "status": "SUBMITTED",
+      "createdAt": "2026-11-20T10:15:00Z",
+      "updatedAt": "2026-11-20T11:45:00Z",
+      "submittedAt": "2026-11-20T11:45:00Z",
+      "rpoLocation": "RPO Delhi (R.K. Puram)",
+      "estimatedCompletionDate": "2026-12-05",
+      "flags": {
+        "hasNameMismatch": false,
+        "hasDobMismatch": false,
+        "hasAddressMismatch": false,
+        "requiresManualVerification": false
+      },
+      "profile": {
+        "fullName": "Rahul Sharma",
+        "givenName": "Rahul",
+        "surname": "Sharma",
+        "dateOfBirth": "1995-08-15",
+        "gender": "MALE",
+        "placeOfBirth": "New Delhi",
+        "maritalStatus": "SINGLE",
+        "employmentType": "PRIVATE",
+        "email": "rahul.sharma@example.com",
+        "phone": "+91 98765 43210",
+        "aadhaarNumberMasked": "XXXX-XXXX-8921",
+        "permanentAddress": {
+          "street": "42 Kasturba Gandhi Marg, Connaught Place",
+          "city": "New Delhi",
+          "state": "Delhi",
+          "pincode": "110001",
+          "policeStation": "Connaught Place Police Station"
+        },
+        "emergencyContact": {
+          "name": "Mahesh Sharma",
+          "relationship": "Father",
+          "phone": "+91 98110 12345"
+        }
+      },
+      "consent": {
+        "id": "cst-88192-active",
+        "applicationId": "APP-2026-88192",
+        "citizenAadhaarMasked": "XXXX-XXXX-8921",
+        "purpose": "Passport Application Assistance KYC Verification & Eligibility Check",
+        "scopes": [
+          "AADHAAR",
+          "CLASS_X_CERTIFICATE",
+          "PAN_CARD",
+          "ELECTRICITY_BILL"
+        ],
+        "validityMinutes": 1440,
+        "grantedAt": "2026-11-20T10:30:00Z",
+        "expiresAt": "2026-11-21T10:30:00Z",
+        "status": "ACTIVE",
+        "ipAddress": "192.168.1.45 (Simulated)",
+        "consentSignature": "b4c8a2f1e6798a728109adcf1928374a5e6d7c8b9a0123456789abcdef012345"
+      },
+      "documents": [
+        {
+          "id": "doc-88192-aadhaar",
+          "applicationId": "APP-2026-88192",
+          "documentType": "AADHAAR",
+          "title": "e-Aadhaar Identity & Address Verification Record",
+          "source": "DIGILOCKER",
+          "uri": "digilocker://in.gov.uidai/adhr/8921",
+          "issuer": "Unique Identification Authority of India (UIDAI)",
+          "issueDate": "2018-05-12",
+          "documentNumberMasked": "XXXX-XXXX-8921",
+          "verificationStatus": "VERIFIED",
+          "verificationNotes": "Cryptographic signature validated against UIDAI public key certificate.",
+          "verifiedAt": "2026-11-20T10:32:00Z",
+          "checksumSha256": "7cd555aaa5c0c85adf73a896f13076ba672a7c7a5e401c04dedeaca5d0cad810",
+          "metadata": {
+            "nameInDoc": "Rahul Sharma",
+            "dobInDoc": "1995-08-15",
+            "addressInDoc": "42 Kasturba Gandhi Marg, Connaught Place, New Delhi 110001",
+            "isDigitallySigned": true,
+            "issuerCertThumbprint": "A9B8C7D6E5F4A3B2C1D0E9F8A7B6C5D4E3F2A1B0"
+          }
+        },
+        {
+          "id": "doc-88192-cbse",
+          "applicationId": "APP-2026-88192",
+          "documentType": "CLASS_X_CERTIFICATE",
+          "title": "CBSE Class X School Examination Certificate",
+          "source": "DIGILOCKER",
+          "uri": "digilocker://in.gov.cbse/cert/2011/89214",
+          "issuer": "Central Board of Secondary Education (CBSE)",
+          "issueDate": "2011-06-05",
+          "documentNumberMasked": "CBSE-2011-XXXX-89214",
+          "verificationStatus": "VERIFIED",
+          "verificationNotes": "DOB matches e-Aadhaar and self-reported application profile.",
+          "verifiedAt": "2026-11-20T10:33:00Z",
+          "checksumSha256": "9f2c75d91560f728bb0e39187f33f283a249d9915ddb014dfd28916c241492a9",
+          "metadata": {
+            "nameInDoc": "Rahul Sharma",
+            "dobInDoc": "1995-08-15",
+            "isDigitallySigned": true
+          }
+        }
+      ],
+      "operatorReviews": []
+    },
+    "APP-2026-44120": {
+      "id": "APP-2026-44120",
+      "applicantId": "usr_priya_441",
+      "serviceType": "FRESH_TATKAAL",
+      "bookletType": "60_PAGES",
+      "status": "DOCUMENTS_PENDING",
+      "createdAt": "2026-11-22T14:00:00Z",
+      "updatedAt": "2026-11-22T14:10:00Z",
+      "rpoLocation": "RPO Ahmedabad (Gujarat)",
+      "flags": {
+        "hasNameMismatch": false,
+        "hasDobMismatch": false,
+        "hasAddressMismatch": false,
+        "requiresManualVerification": false
+      },
+      "profile": {
+        "fullName": "Priya Patel",
+        "givenName": "Priya",
+        "surname": "Patel",
+        "dateOfBirth": "1998-11-20",
+        "gender": "FEMALE",
+        "placeOfBirth": "Ahmedabad",
+        "maritalStatus": "SINGLE",
+        "employmentType": "PRIVATE",
+        "email": "priya.patel@example.com",
+        "phone": "+91 97123 45678",
+        "aadhaarNumberMasked": "XXXX-XXXX-4412",
+        "permanentAddress": {
+          "street": "104 Shivalik Heights, Drive-In Road",
+          "city": "Ahmedabad",
+          "state": "Gujarat",
+          "pincode": "380054",
+          "policeStation": "Vastrapur Police Station"
+        },
+        "emergencyContact": {
+          "name": "Kishore Patel",
+          "relationship": "Father",
+          "phone": "+91 98250 98765"
+        }
+      },
+      "documents": [],
+      "operatorReviews": []
+    }
+  },
+  "auditLogs": [
+    {
+      "id": "log-seed-001",
+      "applicationId": "APP-2026-88192",
+      "timestamp": "2026-11-20T10:15:00Z",
+      "actorRole": "APPLICANT",
+      "actorId": "usr_rahul_991",
+      "actorName": "Rahul Sharma",
+      "action": "APPLICATION_CREATED",
+      "newStatus": "DRAFT",
+      "details": {
+        "serviceType": "FRESH_NORMAL",
+        "bookletType": "36_PAGES"
+      },
+      "ipAddress": "192.168.1.45 (Simulated)",
+      "checksum": "2c8caea3291eb3cf84234f8ded6862ca5c08807f06bddce90db6569449caea85",
+      "prevChecksum": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "log-seed-002",
+      "applicationId": "APP-2026-88192",
+      "timestamp": "2026-11-20T10:30:00Z",
+      "actorRole": "APPLICANT",
+      "actorId": "usr_rahul_991",
+      "actorName": "Rahul Sharma",
+      "action": "CONSENT_GRANTED",
+      "previousStatus": "DOCUMENTS_PENDING",
+      "newStatus": "CONSENT_GRANTED",
+      "details": {
+        "purpose": "Passport Assistance KYC",
+        "scopes": [
+          "AADHAAR",
+          "CLASS_X_CERTIFICATE"
+        ]
+      },
+      "ipAddress": "192.168.1.45 (Simulated)",
+      "checksum": "042c937e0a415d697f52c1c9a67f9278d69be62903e78e66a16a68488c7a8f35",
+      "prevChecksum": "2c8caea3291eb3cf84234f8ded6862ca5c08807f06bddce90db6569449caea85"
+    },
+    {
+      "id": "log-seed-003",
+      "applicationId": "APP-2026-88192",
+      "timestamp": "2026-11-20T10:33:00Z",
+      "actorRole": "SYSTEM",
+      "actorId": "digilocker_sync_worker",
+      "actorName": "DigiLocker Mock Sync",
+      "action": "DOCUMENTS_PULLED",
+      "previousStatus": "CONSENT_GRANTED",
+      "newStatus": "DOCUMENTS_FETCHED",
+      "details": {
+        "pulledDocuments": [
+          "AADHAAR",
+          "CLASS_X_CERTIFICATE"
+        ],
+        "verificationStatus": "VERIFIED"
+      },
+      "ipAddress": "127.0.0.1",
+      "checksum": "a67bd122c4b252b60b30e8d762596745257f4024d9dcf23c76d3f6950138accc",
+      "prevChecksum": "042c937e0a415d697f52c1c9a67f9278d69be62903e78e66a16a68488c7a8f35"
+    },
+    {
+      "id": "log-seed-004",
+      "applicationId": "APP-2026-88192",
+      "timestamp": "2026-11-20T11:45:00Z",
+      "actorRole": "APPLICANT",
+      "actorId": "usr_rahul_991",
+      "actorName": "Rahul Sharma",
+      "action": "APPLICATION_SUBMITTED",
+      "previousStatus": "DOCUMENTS_FETCHED",
+      "newStatus": "SUBMITTED",
+      "details": {
+        "declarationAcknowledged": true,
+        "bundleSize": 2
+      },
+      "ipAddress": "192.168.1.45 (Simulated)",
+      "checksum": "cd3de3374824dbef15bbb91d8bdb4c23165b13f9b99e35eb00bf09dea7ee9534",
+      "prevChecksum": "a67bd122c4b252b60b30e8d762596745257f4024d9dcf23c76d3f6950138accc"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-001",
+      "applicationId": "APP-2026-88192",
+      "channel": "SMS_SIMULATED",
+      "recipient": "+91 98765 43210",
+      "title": "Application Submitted Successfully",
+      "message": "Dear Rahul Sharma, your passport assistance application APP-2026-88192 has been received and queued for operator review.",
+      "createdAt": "2026-11-20T11:45:05Z",
+      "read": true
+    },
+    {
+      "id": "notif-002",
+      "applicationId": "APP-2026-44120",
+      "channel": "IN_APP",
+      "recipient": "priya.patel@example.com",
+      "title": "Documents Required",
+      "message": "Please complete your DigiLocker consent to automatically verify your Aadhaar and 10th certificate.",
+      "createdAt": "2026-11-22T14:10:00Z",
+      "read": false
+    }
+  ]
+}
