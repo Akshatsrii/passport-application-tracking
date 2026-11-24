@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import {
   PassportApplication,
   AuditLog,
@@ -18,12 +19,20 @@ interface DatabaseSchema {
   notifications: NotificationItem[];
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL
+  ? path.join(os.tmpdir(), "passport-data")
+  : path.join(process.cwd(), "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
+const BUNDLED_SEED_FILE = path.join(process.cwd(), "data", "store.json");
 
 function ensureDir(dirPath: string) {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  } catch (err) {
+    // Read-only filesystem warning handled gracefully
   }
 }
 
@@ -272,6 +281,12 @@ class MemoryStore {
       if (fs.existsSync(STORE_FILE)) {
         const raw = fs.readFileSync(STORE_FILE, "utf-8");
         return JSON.parse(raw);
+      }
+      if (fs.existsSync(BUNDLED_SEED_FILE)) {
+        const raw = fs.readFileSync(BUNDLED_SEED_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        this.saveData(parsed);
+        return parsed;
       }
     } catch (err) {
       console.warn("Failed to read store.json, falling back to seed initial data:", err);
