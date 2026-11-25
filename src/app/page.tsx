@@ -119,14 +119,10 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 space-y-1">
-          <p className="font-semibold text-slate-700">
-            Passport Application & Tracking Assistance Prototype with DigiLocker Simulation
-          </p>
-          <p className="text-[11px]">
-            Technical Assessment Submission • Evaluated for Anshumat Foundation • v1.3 Standard Compliance
-          </p>
+      <footer className="border-t border-slate-200 py-6 text-xs text-slate-500 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
+          <span className="font-medium text-slate-600">PassportAssist • DigiLocker Verification Workflow</span>
+          <span className="text-slate-400">Prototype Sandbox Demonstration</span>
         </div>
       </footer>
 

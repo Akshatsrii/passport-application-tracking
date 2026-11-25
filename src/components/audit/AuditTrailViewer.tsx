@@ -3,14 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { AuditLog } from "@/types";
 import {
-  ShieldCheck,
-  CheckCircle,
-  AlertTriangle,
+  Check,
   RefreshCw,
-  Lock,
-  User,
-  Cpu,
-  Fingerprint,
+  Search,
+  ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 
 export const AuditTrailViewer: React.FC = () => {
@@ -41,138 +38,103 @@ export const AuditTrailViewer: React.FC = () => {
   }, [filterAppId]);
 
   return (
-    <div className="space-y-6">
-      {/* Audit Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-700" />
-            <h2 className="text-base font-bold text-slate-900">Tamper-Evident Cryptographic Audit Trail</h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Append-only audit ledger with SHA-256 hash chaining under Section 7A & 8 of IT Act 2000.
+          <h2 className="text-sm font-semibold text-slate-900">System Audit Log</h2>
+          <p className="text-xs text-slate-500">
+            Append-only event ledger with SHA-256 tamper-evident hash chaining.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <input
             type="text"
-            placeholder="Filter by App ID (e.g. APP-2026-88192)"
+            placeholder="Filter by App ID..."
             value={filterAppId}
             onChange={(e) => setFilterAppId(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 w-44"
           />
           <button
             onClick={fetchLogs}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 text-slate-700 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center gap-1.5 transition-colors"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-600" : "text-slate-500"}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-600" : "text-slate-400"}`} />
             Refresh
           </button>
         </div>
       </div>
 
-      {/* Integrity Verification Card */}
+      {/* Integrity Pill Banner */}
       {integrity && (
-        <div
-          className={`p-4 rounded-xl border flex items-center justify-between text-xs ${
-            integrity.isChainIntact
-              ? "bg-emerald-50 border-emerald-200 text-emerald-950"
-              : "bg-red-50 border-red-200 text-red-950"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white ${
-                integrity.isChainIntact ? "bg-emerald-600" : "bg-red-600"
-              }`}
-            >
-              {integrity.isChainIntact ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-            </div>
-            <div>
-              <div className="font-bold text-sm">
-                {integrity.isChainIntact
-                  ? "Audit Chain Integrity Verified (100% Cryptographic Match)"
-                  : "Tamper Warning: Checksum Mismatch Detected!"}
-              </div>
-              <div className="text-[11px] opacity-80 mt-0.5">
-                {integrity.verifiedRecordsCount} sequential records validated using {integrity.algorithm}. No altered blocks.
-              </div>
-            </div>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-700 shadow-xs">
+          <div className="flex items-center gap-2">
+            {integrity.isChainIntact ? (
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+            )}
+            <span className="font-medium text-slate-900">
+              {integrity.isChainIntact ? "Cryptographic Chain Verified" : "Chain Integrity Issue"}
+            </span>
+            <span className="text-slate-400">•</span>
+            <span className="text-slate-500">{integrity.verifiedRecordsCount} records validated via SHA-256 hash chaining</span>
           </div>
-
-          <span className="font-mono text-[10px] px-2 py-1 rounded bg-white/70 border border-emerald-300 font-bold hidden sm:inline">
-            SHA-256 LEDGER SECURE
+          <span className="font-mono text-[11px] text-slate-400 hidden sm:inline">
+            HMAC / SHA-256
           </span>
         </div>
       )}
 
-      {/* Log Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Audit Log Table */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Application ID</th>
-                <th className="py-3 px-4">Actor</th>
-                <th className="py-3 px-4">Action</th>
-                <th className="py-3 px-4">Status Transition</th>
-                <th className="py-3 px-4">Details / Remarks</th>
-                <th className="py-3 px-4">Block Checksum (SHA-256)</th>
+              <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-600 font-medium text-[11px]">
+                <th className="py-2.5 px-3.5">Timestamp</th>
+                <th className="py-2.5 px-3.5">Application</th>
+                <th className="py-2.5 px-3.5">Actor</th>
+                <th className="py-2.5 px-3.5">Action</th>
+                <th className="py-2.5 px-3.5">Status Transition</th>
+                <th className="py-2.5 px-3.5">Remarks / Metadata</th>
+                <th className="py-2.5 px-3.5 font-mono">Hash Checksum</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-normal">
+            <tbody className="divide-y divide-slate-100">
               {logs.map((log) => {
-                const isApplicant = log.actorRole === "APPLICANT";
-                const isOperator = log.actorRole === "OPERATOR";
-                const isSystem = log.actorRole === "SYSTEM";
-
                 return (
-                  <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                      {new Date(log.timestamp).toLocaleString()}
+                  <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap font-mono font-bold text-slate-800">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap font-mono text-slate-700">
                       {log.applicationId || "SYSTEM"}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                          isApplicant
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : isOperator
-                            ? "bg-purple-50 text-purple-700 border border-purple-200"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {isApplicant && <User className="w-2.5 h-2.5" />}
-                        {isOperator && <ShieldCheck className="w-2.5 h-2.5" />}
-                        {isSystem && <Cpu className="w-2.5 h-2.5" />}
-                        {log.actorName}
-                      </span>
+                    <td className="py-2.5 px-3.5 whitespace-nowrap text-slate-700">
+                      <span className="font-medium">{log.actorName}</span>{" "}
+                      <span className="text-[10px] text-slate-400">({log.actorRole.toLowerCase()})</span>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap font-semibold text-slate-900">
-                      {log.action}
+                    <td className="py-2.5 px-3.5 whitespace-nowrap font-medium text-slate-900">
+                      {log.action.replace(/STATUS_TRANSITION_/g, "TRANSITION: ")}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
                       {log.previousStatus && log.newStatus ? (
-                        <span className="text-[11px] text-slate-600 font-medium">
-                          {log.previousStatus} &rarr; <strong className="text-blue-700">{log.newStatus}</strong>
+                        <span className="text-[11px] text-slate-500">
+                          {log.previousStatus} &rarr; <span className="text-slate-900 font-medium">{log.newStatus}</span>
                         </span>
                       ) : log.newStatus ? (
-                        <span className="text-[11px] text-blue-700 font-bold">{log.newStatus}</span>
+                        <span className="text-[11px] text-slate-900 font-medium">{log.newStatus}</span>
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 max-w-xs text-slate-600 text-[11px] truncate" title={JSON.stringify(log.details)}>
+                    <td className="py-2.5 px-3.5 max-w-xs text-slate-500 text-[11px] truncate">
                       {log.details.notes || JSON.stringify(log.details)}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap font-mono text-[10px] text-slate-400">
-                      <span title={`Previous: ${log.prevChecksum}\nCurrent: ${log.checksum}`}>
-                        {log.checksum.slice(0, 16)}...
-                      </span>
+                    <td className="py-2.5 px-3.5 whitespace-nowrap font-mono text-[10px] text-slate-400">
+                      {log.checksum.slice(0, 12)}...
                     </td>
                   </tr>
                 );

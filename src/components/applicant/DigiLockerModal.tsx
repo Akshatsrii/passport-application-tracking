@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Shield, CheckCircle2, Lock, X, AlertCircle, FileCheck, KeyRound } from "lucide-react";
+import { Shield, Check, X, AlertCircle, FileText, Lock } from "lucide-react";
 import { DocumentType } from "@/types";
 
 interface DigiLockerModalProps {
@@ -34,7 +34,7 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
   if (!isOpen) return null;
 
   const toggleScope = (scope: DocumentType) => {
-    if (scope === "AADHAAR") return; // mandatory
+    if (scope === "AADHAAR") return; // Aadhaar is mandatory
     if (scopes.includes(scope)) {
       setScopes(scopes.filter((s) => s !== scope));
     } else {
@@ -44,7 +44,7 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
 
   const handleAuthorize = async () => {
     if (!hasAgreed) {
-      setError("You must agree to the statutory consent terms to proceed.");
+      setError("Please accept the consent terms to proceed.");
       return;
     }
     setError(null);
@@ -53,140 +53,123 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
       await onGrantConsent(selectedPersona, scopes);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Consent authorization failed");
+      setError(err.message || "Failed to authorize DigiLocker");
       setStep("scopes");
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-        {/* DigiLocker Header Simulation */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
+        {/* Clean DigiLocker Modal Header */}
+        <div className="bg-[#0b47a8] text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-white text-blue-700 flex items-center justify-center font-bold text-sm shadow">
+            <div className="w-8 h-8 rounded bg-white text-[#0b47a8] flex items-center justify-center font-bold text-xs tracking-tighter">
               DL
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base tracking-tight">DigiLocker Consent Gateway</h3>
-                <span className="bg-blue-900/60 text-blue-100 text-[10px] px-2 py-0.5 rounded border border-blue-400/30">
-                  SANDBOX MOCK
+                <span className="font-semibold text-sm">DigiLocker</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.2 rounded font-medium">
+                  OAuth 2.0
                 </span>
               </div>
-              <p className="text-xs text-blue-200">Ministry of Electronics & IT (MeitY) • Digital India</p>
+              <p className="text-[11px] text-blue-100">National e-Governance Division (MeitY)</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-blue-200 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors"
+            className="text-white/80 hover:text-white p-1 rounded-md transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 space-y-5">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-xs text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {step === "scopes" && (
             <>
-              {/* Requesting Party Notice */}
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1">
-                <div className="flex items-center justify-between text-slate-700 font-semibold">
-                  <span>Requesting Organization:</span>
-                  <span className="text-blue-700">Passport Assistance Seva Portal</span>
+              {/* Context Summary */}
+              <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/70 text-xs space-y-1">
+                <div className="text-slate-600">
+                  <span className="font-medium text-slate-900">Passport Seva Assist</span> is requesting access to your verified documents to substantiate identity and date of birth.
                 </div>
-                <div className="flex items-center justify-between text-slate-500">
-                  <span>Purpose:</span>
-                  <span>Passport Application KYC & Date of Birth Verification</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-500">
-                  <span>Applicant Aadhaar:</span>
-                  <span className="font-mono text-slate-700 font-semibold">{maskedAadhaar}</span>
+                <div className="text-[11px] text-slate-500 pt-1">
+                  Registered Aadhaar: <span className="font-mono font-semibold text-slate-700">{maskedAadhaar}</span>
                 </div>
               </div>
 
-              {/* Persona Selection for Demo Testing */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700">
-                  Simulated Citizen Profile for Testing:
+              {/* Persona Selector for Sandbox Testing */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Select Sandbox Citizen Account:
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedPersona("rahul-sharma")}
-                    className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                    className={`p-2.5 rounded-lg border text-left text-xs transition-colors ${
                       selectedPersona === "rahul-sharma"
-                        ? "border-blue-600 bg-blue-50/70 text-blue-900 ring-1 ring-blue-500"
+                        ? "border-blue-600 bg-blue-50/40 text-blue-900"
                         : "border-slate-200 hover:bg-slate-50 text-slate-700"
                     }`}
                   >
-                    <div className="font-bold flex items-center gap-1">
-                      <span>Rahul Sharma</span>
-                      <span className="text-[10px] bg-green-100 text-green-700 px-1 rounded">100% Match</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500">All documents match application details</div>
+                    <div className="font-semibold">Rahul Sharma</div>
+                    <div className="text-[11px] text-slate-500">Exact match scenario</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedPersona("priya-patel")}
-                    className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                    className={`p-2.5 rounded-lg border text-left text-xs transition-colors ${
                       selectedPersona === "priya-patel"
-                        ? "border-amber-600 bg-amber-50/70 text-amber-900 ring-1 ring-amber-500"
+                        ? "border-blue-600 bg-blue-50/40 text-blue-900"
                         : "border-slate-200 hover:bg-slate-50 text-slate-700"
                     }`}
                   >
-                    <div className="font-bold flex items-center gap-1">
-                      <span>Priya Patel</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1 rounded">Name Mismatch</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500">Class X middle initial discrepancy</div>
+                    <div className="font-semibold">Priya Patel</div>
+                    <div className="text-[11px] text-slate-500">Name discrepancy scenario</div>
                   </button>
                 </div>
               </div>
 
-              {/* Requested Documents Scopes */}
-              <div className="space-y-2">
+              {/* Document Scopes */}
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Select Documents to Share from Digital Locker:
+                  Documents to be shared:
                 </label>
-                <div className="space-y-2">
-                  <div
-                    onClick={() => toggleScope("AADHAAR")}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer text-xs"
-                  >
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs">
                     <div className="flex items-center gap-2">
-                      <FileCheck className="w-4 h-4 text-green-600" />
+                      <FileText className="w-4 h-4 text-slate-600" />
                       <div>
-                        <div className="font-semibold text-slate-800">Aadhaar Verification Record</div>
-                        <div className="text-[11px] text-slate-500">Issued by UIDAI • Proof of Identity & Address</div>
+                        <div className="font-medium text-slate-800">e-Aadhaar Verification Record</div>
+                        <div className="text-[11px] text-slate-500">Unique Identification Authority of India (UIDAI)</div>
                       </div>
                     </div>
-                    <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold">
-                      MANDATORY
-                    </span>
+                    <span className="text-[10px] font-medium text-slate-500">Required</span>
                   </div>
 
                   <div
                     onClick={() => toggleScope("CLASS_X_CERTIFICATE")}
-                    className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer text-xs transition-colors ${
+                    className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                       scopes.includes("CLASS_X_CERTIFICATE")
-                        ? "border-blue-300 bg-blue-50/50"
-                        : "border-slate-200 hover:bg-slate-50 opacity-60"
+                        ? "border-slate-300 bg-white"
+                        : "border-slate-200 opacity-60 bg-slate-50"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileCheck className="w-4 h-4 text-blue-600" />
+                      <FileText className="w-4 h-4 text-slate-600" />
                       <div>
-                        <div className="font-semibold text-slate-800">Class X Passing Certificate</div>
-                        <div className="text-[11px] text-slate-500">Issued by CBSE / State Board • Proof of Date of Birth</div>
+                        <div className="font-medium text-slate-800">Grade 10 Matriculation Certificate</div>
+                        <div className="text-[11px] text-slate-500">CBSE / State Secondary Board (DOB Proof)</div>
                       </div>
                     </div>
                     <input
@@ -199,17 +182,17 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
 
                   <div
                     onClick={() => toggleScope("PAN_CARD")}
-                    className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer text-xs transition-colors ${
+                    className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                       scopes.includes("PAN_CARD")
-                        ? "border-blue-300 bg-blue-50/50"
-                        : "border-slate-200 hover:bg-slate-50 opacity-60"
+                        ? "border-slate-300 bg-white"
+                        : "border-slate-200 opacity-60 bg-slate-50"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileCheck className="w-4 h-4 text-blue-600" />
+                      <FileText className="w-4 h-4 text-slate-600" />
                       <div>
-                        <div className="font-semibold text-slate-800">PAN Verification Record</div>
-                        <div className="text-[11px] text-slate-500">Issued by Income Tax Department • Identity Proof</div>
+                        <div className="font-medium text-slate-800">PAN Verification Record</div>
+                        <div className="text-[11px] text-slate-500">Income Tax Department</div>
                       </div>
                     </div>
                     <input
@@ -219,64 +202,38 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
                       className="rounded text-blue-600 w-4 h-4"
                     />
                   </div>
-
-                  <div
-                    onClick={() => toggleScope("ELECTRICITY_BILL")}
-                    className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer text-xs transition-colors ${
-                      scopes.includes("ELECTRICITY_BILL")
-                        ? "border-blue-300 bg-blue-50/50"
-                        : "border-slate-200 hover:bg-slate-50 opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileCheck className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <div className="font-semibold text-slate-800">Electricity Utility Bill</div>
-                        <div className="text-[11px] text-slate-500">Issued by Power Discom • Present Address Proof</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={scopes.includes("ELECTRICITY_BILL")}
-                      readOnly
-                      className="rounded text-blue-600 w-4 h-4"
-                    />
-                  </div>
                 </div>
               </div>
 
-              {/* Statutory Consent Box */}
-              <div className="bg-amber-50/60 p-3 rounded-lg border border-amber-200/80 text-xs text-amber-900 space-y-2">
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hasAgreed}
-                    onChange={(e) => setHasAgreed(e.target.checked)}
-                    className="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
-                  />
-                  <span className="leading-relaxed">
-                    I hereby provide voluntary explicit consent under the Information Technology (Digital Locker Facilities) Rules to fetch my digitally signed documents. I understand that consent may be revoked at any time.
-                  </span>
-                </label>
-              </div>
+              {/* Consent Terms */}
+              <label className="flex items-start gap-2 pt-1 text-xs text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasAgreed}
+                  onChange={(e) => setHasAgreed(e.target.checked)}
+                  className="mt-0.5 rounded text-blue-600"
+                />
+                <span className="leading-relaxed">
+                  I consent to sharing my digitally signed records from DigiLocker for passport assistance KYC. I understand I can revoke this consent anytime.
+                </span>
+              </label>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors"
                 >
-                  Cancel / Deny
+                  Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep("otp")}
                   disabled={!hasAgreed}
-                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-semibold bg-[#0b47a8] hover:bg-blue-800 text-white rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  Proceed to Verification
+                  Authenticate & Continue
                 </button>
               </div>
             </>
@@ -285,41 +242,42 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
           {step === "otp" && (
             <div className="space-y-4 py-2">
               <div className="text-center space-y-1">
-                <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Lock className="w-6 h-6" />
+                <div className="w-10 h-10 bg-blue-50 text-[#0b47a8] rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Lock className="w-5 h-5" />
                 </div>
-                <h4 className="font-bold text-slate-900 text-sm">Simulated Aadhaar OTP Verification</h4>
+                <h4 className="font-semibold text-slate-900 text-sm">Security Verification</h4>
                 <p className="text-xs text-slate-500">
-                  A simulated one-time password has been generated for Aadhaar {maskedAadhaar}.
+                  Enter the 6-digit OTP sent to your Aadhaar-linked mobile number ({maskedAadhaar}).
                 </p>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
-                <div className="text-xs text-slate-500 mb-1">Simulated OTP (Auto-filled for demonstration):</div>
+              <div className="max-w-xs mx-auto">
                 <input
                   type="text"
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-40 text-center tracking-widest font-mono text-lg font-bold py-1 px-3 border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-center tracking-[0.5em] font-mono text-xl font-bold py-2 px-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <div className="text-[11px] text-slate-400 text-center mt-1.5">
+                  Sandbox demo OTP: 123456
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setStep("scopes")}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={handleAuthorize}
-                  className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Authorize & Fetch Documents
+                  Verify & Pull Documents
                 </button>
               </div>
             </div>
@@ -327,22 +285,16 @@ export const DigiLockerModal: React.FC<DigiLockerModalProps> = ({
 
           {step === "loading" && (
             <div className="py-8 text-center space-y-3">
-              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <h4 className="font-bold text-slate-900 text-sm">Communicating with DigiLocker Gateway...</h4>
-              <p className="text-xs text-slate-500">
-                Generating signed consent artifact, exchanging OAuth 2.0 token, and verifying document digital signatures.
-              </p>
+              <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-xs text-slate-600 font-medium">Fetching verified issuer records from DigiLocker...</p>
             </div>
           )}
         </div>
 
-        {/* Footer Security Badge */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-2.5 flex items-center justify-between text-[11px] text-slate-500">
-          <span className="flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-blue-600" />
-            256-bit SSL • Tamper-evident Audit Chaining
-          </span>
-          <span>UIDAI & IT Act 2000 Compliant Mock</span>
+        {/* Modal Footer */}
+        <div className="bg-slate-50 px-6 py-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+          <span>DigiLocker IT Act 2000 Integration</span>
+          <span>Encrypted Gateway</span>
         </div>
       </div>
     </div>

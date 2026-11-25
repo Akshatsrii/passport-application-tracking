@@ -4,23 +4,19 @@ import React, { useState } from "react";
 import {
   PassportApplication,
   DocumentType,
-  ApplicationDocument,
 } from "@/types";
 import { TrackingTimeline } from "./TrackingTimeline";
 import { DigiLockerModal } from "./DigiLockerModal";
 import {
-  FileCheck,
+  FileText,
   ShieldCheck,
-  AlertTriangle,
-  Send,
+  AlertCircle,
+  Check,
   User,
-  MapPin,
+  ArrowRight,
+  Shield,
+  RotateCw,
   Lock,
-  CheckCircle,
-  ExternalLink,
-  Ban,
-  Fingerprint,
-  RefreshCw,
 } from "lucide-react";
 
 interface ApplicantPortalProps {
@@ -39,22 +35,22 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
-  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const currentApp = applications.find((a) => a.id === selectedAppId) || applications[0];
 
   if (!currentApp) {
     return (
-      <div className="p-8 text-center bg-white rounded-xl border border-slate-200">
-        <p className="text-sm text-slate-500">No applications found. Please click Reset Demo.</p>
+      <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
+        <p className="text-xs text-slate-500">No applications loaded. Please click Reset Demo.</p>
       </div>
     );
   }
 
   const handleGrantConsent = async (personaKey: string, scopes: DocumentType[]) => {
     try {
-      setActionMessage(null);
-      // Step 1: Register Consent
+      setStatusMessage(null);
+      // 1. Consent
       const consentRes = await fetch("/api/digilocker/consent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,7 +66,7 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
       const consentData = await consentRes.json();
       if (!consentData.success) throw new Error(consentData.error);
 
-      // Step 2: Fetch Documents
+      // 2. Fetch
       const fetchRes = await fetch("/api/digilocker/fetch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,21 +78,19 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
       const fetchData = await fetchRes.json();
       if (!fetchData.success) throw new Error(fetchData.error);
 
-      setActionMessage({
+      setStatusMessage({
         type: "success",
-        text: `Consent granted and ${fetchData.data.documents.length} verified documents fetched via DigiLocker.`,
+        text: `DigiLocker consent recorded and ${fetchData.data.documents.length} documents verified.`,
       });
       onRefresh();
     } catch (err: any) {
-      setActionMessage({ type: "error", text: err.message || "Failed to complete DigiLocker verification" });
+      setStatusMessage({ type: "error", text: err.message || "Failed to link DigiLocker" });
       throw err;
     }
   };
 
   const handleRevokeConsent = async () => {
-    if (!confirm("Are you sure you want to revoke DigiLocker consent? This will be recorded in the audit trail.")) {
-      return;
-    }
+    if (!confirm("Revoke DigiLocker consent for this application?")) return;
     setIsRevoking(true);
     try {
       const res = await fetch("/api/digilocker/revoke", {
@@ -107,13 +101,13 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      setActionMessage({
+      setStatusMessage({
         type: "success",
-        text: "DigiLocker consent has been revoked. Application documents require re-authorization.",
+        text: "DigiLocker consent revoked. Documents reverted to pending state.",
       });
       onRefresh();
     } catch (err: any) {
-      setActionMessage({ type: "error", text: err.message || "Failed to revoke consent" });
+      setStatusMessage({ type: "error", text: err.message || "Revocation failed" });
     } finally {
       setIsRevoking(false);
     }
@@ -121,7 +115,7 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
 
   const handleSubmitApplication = async () => {
     setIsSubmitting(true);
-    setActionMessage(null);
+    setStatusMessage(null);
     try {
       const res = await fetch(`/api/applications/${currentApp.id}/status`, {
         method: "POST",
@@ -131,19 +125,19 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
           actorRole: "APPLICANT",
           actorId: currentApp.applicantId,
           actorName: currentApp.profile.fullName,
-          notes: "Applicant self-declaration submitted online",
+          notes: "Applicant confirmed submission checklist",
         }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      setActionMessage({
+      setStatusMessage({
         type: "success",
-        text: "Application submitted successfully! It has been placed in the operator review queue.",
+        text: "Application submitted successfully and routed to operator review desk.",
       });
       onRefresh();
     } catch (err: any) {
-      setActionMessage({ type: "error", text: err.message || "Submission failed" });
+      setStatusMessage({ type: "error", text: err.message || "Submission failed" });
     } finally {
       setIsSubmitting(false);
     }
@@ -151,295 +145,307 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
 
   const hasAadhaar = currentApp.documents.some((d) => d.documentType === "AADHAAR");
   const hasClassX = currentApp.documents.some((d) => d.documentType === "CLASS_X_CERTIFICATE");
-  const canSubmit = (currentApp.status === "DOCUMENTS_FETCHED" || currentApp.status === "ADDITIONAL_INFO_REQUESTED") && hasAadhaar;
+  const aadhaarDoc = currentApp.documents.find((d) => d.documentType === "AADHAAR");
+  const classXDoc = currentApp.documents.find((d) => d.documentType === "CLASS_X_CERTIFICATE");
+
+  const canSubmit =
+    (currentApp.status === "DOCUMENTS_FETCHED" || currentApp.status === "ADDITIONAL_INFO_REQUESTED") &&
+    hasAadhaar;
+
+  const initials = currentApp.profile.fullName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2);
 
   return (
     <div className="space-y-6">
-      {/* Persona Selector Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <User className="w-5 h-5 text-blue-600" />
+      {/* Profile Bar / Account Switcher */}
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-semibold text-sm">
+            {initials}
+          </div>
           <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Applicant View</span>
-            <h2 className="text-sm font-bold text-slate-900">
-              Active Applicant: {currentApp.profile.fullName} ({currentApp.id})
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-slate-900">{currentApp.profile.fullName}</h2>
+              <span className="text-[11px] font-mono text-slate-500">{currentApp.id}</span>
+            </div>
+            <p className="text-xs text-slate-500">
+              {currentApp.serviceType.replace("_", " ")} • {currentApp.bookletType.replace("_", " ")} Booklet
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Switch Application:</span>
-          {applications.map((app) => (
-            <button
-              key={app.id}
-              onClick={() => onSelectApplication(app.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                app.id === currentApp.id
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              {app.profile.fullName.split(" ")[0]} ({app.status.replace(/_/g, " ")})
-            </button>
-          ))}
+        {/* Subtle persona switcher */}
+        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-50 p-1 rounded-lg border border-slate-200">
+          <span className="text-[11px] text-slate-500 px-2">Applicant:</span>
+          {applications.map((app) => {
+            const isSelected = app.id === currentApp.id;
+            return (
+              <button
+                key={app.id}
+                onClick={() => onSelectApplication(app.id)}
+                className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${
+                  isSelected
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {app.profile.fullName.split(" ")[0]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {actionMessage && (
+      {statusMessage && (
         <div
-          className={`p-4 rounded-xl border text-xs flex items-center gap-2 font-medium ${
-            actionMessage.type === "success"
-              ? "bg-green-50 border-green-200 text-green-800"
+          className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 border ${
+            statusMessage.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
               : "bg-red-50 border-red-200 text-red-800"
           }`}
         >
-          {actionMessage.type === "success" ? (
-            <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+          {statusMessage.type === "success" ? (
+            <Check className="w-4 h-4 text-emerald-600 shrink-0" />
           ) : (
-            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           )}
-          <span>{actionMessage.text}</span>
+          <span>{statusMessage.text}</span>
         </div>
       )}
 
-      {/* Lifecycle Progress Stepper */}
+      {/* Progress Timeline */}
       <TrackingTimeline application={currentApp} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Applicant Demographic Profile */}
+        {/* Left Column: Personal Profile Details */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <User className="w-4 h-4 text-slate-600" />
-                Applicant Demographics
+              <h3 className="font-semibold text-xs text-slate-900 uppercase tracking-wider">
+                Applicant Details
               </h3>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                {currentApp.serviceType.replace("_", " ")}
-              </span>
+              <span className="text-[11px] text-slate-500">Self-declared</span>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <dl className="space-y-3 text-xs">
               <div>
-                <span className="text-slate-400 block text-[11px]">Full Name</span>
-                <span className="font-semibold text-slate-800">{currentApp.profile.fullName}</span>
+                <dt className="text-slate-400 text-[11px]">Full Name</dt>
+                <dd className="font-medium text-slate-800 mt-0.5">{currentApp.profile.fullName}</dd>
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Date of Birth</span>
-                  <span className="font-semibold text-slate-800">{currentApp.profile.dateOfBirth}</span>
+                  <dt className="text-slate-400 text-[11px]">Date of Birth</dt>
+                  <dd className="font-medium text-slate-800 mt-0.5">{currentApp.profile.dateOfBirth}</dd>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[11px]">Gender</span>
-                  <span className="font-semibold text-slate-800">{currentApp.profile.gender}</span>
+                  <dt className="text-slate-400 text-[11px]">Gender</dt>
+                  <dd className="font-medium text-slate-800 mt-0.5">{currentApp.profile.gender}</dd>
                 </div>
               </div>
+
               <div>
-                <span className="text-slate-400 block text-[11px]">Aadhaar (PII Masked)</span>
-                <span className="font-mono font-bold text-slate-800">{currentApp.profile.aadhaarNumberMasked}</span>
+                <dt className="text-slate-400 text-[11px]">Aadhaar Number (Masked)</dt>
+                <dd className="font-mono text-slate-800 font-medium mt-0.5">
+                  {currentApp.profile.aadhaarNumberMasked}
+                </dd>
               </div>
+
               <div>
-                <span className="text-slate-400 block text-[11px]">Contact Details</span>
-                <div className="text-slate-700">{currentApp.profile.email}</div>
-                <div className="text-slate-700">{currentApp.profile.phone}</div>
+                <dt className="text-slate-400 text-[11px]">Contact</dt>
+                <dd className="text-slate-700 mt-0.5">{currentApp.profile.email}</dd>
+                <dd className="text-slate-700">{currentApp.profile.phone}</dd>
               </div>
+
               <div>
-                <span className="text-slate-400 block text-[11px]">Permanent Address</span>
-                <div className="text-slate-700 leading-snug">
+                <dt className="text-slate-400 text-[11px]">Residential Address</dt>
+                <dd className="text-slate-700 mt-0.5 leading-snug">
                   {currentApp.profile.permanentAddress.street}, {currentApp.profile.permanentAddress.city},{" "}
                   {currentApp.profile.permanentAddress.state} - {currentApp.profile.permanentAddress.pincode}
-                </div>
+                </dd>
               </div>
+
               <div>
-                <span className="text-slate-400 block text-[11px]">Police Jurisdiction</span>
-                <div className="text-slate-700">{currentApp.profile.permanentAddress.policeStation}</div>
+                <dt className="text-slate-400 text-[11px]">Police Station</dt>
+                <dd className="text-slate-700 mt-0.5">{currentApp.profile.permanentAddress.policeStation}</dd>
               </div>
-            </div>
+            </dl>
           </div>
 
-          {/* Active Consent Card */}
+          {/* Consent Artifact Card */}
           {currentApp.consent && (
             <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 text-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <Fingerprint className="w-4 h-4 text-blue-600" />
-                  Consent Artifact
+                <span className="font-medium text-slate-800 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-slate-600" />
+                  DigiLocker Consent
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  className={`text-[10px] font-medium px-2 py-0.5 rounded ${
                     currentApp.consent.status === "ACTIVE"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {currentApp.consent.status}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-snug">
-                Purpose: {currentApp.consent.purpose}
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Voluntary consent granted for identity verification under IT Act 2000.
               </p>
-              <div className="font-mono text-[10px] text-slate-500 break-all bg-white p-2 rounded border border-slate-200">
-                Signature: {currentApp.consent.consentSignature.slice(0, 24)}...
-              </div>
               {currentApp.consent.status === "ACTIVE" && (
                 <button
                   type="button"
                   onClick={handleRevokeConsent}
                   disabled={isRevoking}
-                  className="w-full mt-2 py-1.5 text-center text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="text-xs text-red-600 hover:text-red-700 font-medium pt-1 inline-flex items-center gap-1 transition-colors disabled:opacity-50"
                 >
-                  <Ban className="w-3.5 h-3.5" />
-                  Revoke DigiLocker Consent
+                  Revoke consent access
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* Right Column: Document Checklist & DigiLocker Connection */}
+        {/* Right Column: Required Documents Checklist */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
               <div>
-                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-blue-600" />
-                  Verified Document Checklist
+                <h3 className="font-semibold text-xs text-slate-900 uppercase tracking-wider">
+                  Document Checklist
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Documents required by Ministry of External Affairs for passport issuance
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Verify identity and birth date directly from official government repositories
                 </p>
               </div>
 
-              {/* Connect DigiLocker Button */}
+              {/* Clean DigiLocker Connect Button */}
               {currentApp.status === "DOCUMENTS_PENDING" || !hasAadhaar ? (
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2 rounded-lg bg-[#0b47a8] hover:bg-blue-800 text-white text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  Connect DigiLocker (Consent Flow)
+                  <Shield className="w-3.5 h-3.5" />
+                  Fetch via DigiLocker
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                  Re-sync DigiLocker Documents
+                  <RotateCw className="w-3.5 h-3.5 text-slate-400" />
+                  Re-sync Documents
                 </button>
               )}
             </div>
 
-            {/* Checklist Items */}
+            {/* Document Checklist Items */}
             <div className="space-y-3">
-              {/* Document 1: Aadhaar (POI + POA) */}
+              {/* Document 1: Aadhaar */}
               <div
-                className={`p-4 rounded-xl border transition-all text-xs ${
-                  hasAadhaar
-                    ? "border-green-200 bg-green-50/40"
-                    : "border-amber-200 bg-amber-50/40"
+                className={`p-4 rounded-lg border transition-colors ${
+                  hasAadhaar ? "border-slate-200 bg-slate-50/50" : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">Proof of Identity & Address (Aadhaar)</span>
+                      <span className="font-semibold text-slate-900 text-xs">Proof of Identity & Address</span>
                       {hasAadhaar ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 border border-green-200">
-                          VERIFIED VIA DIGILOCKER
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <Check className="w-3 h-3" /> Linked via UIDAI
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          PENDING FETCH
+                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                          Not Linked
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-600 text-[11px]">
-                      Mandatory primary proof under Passport Rules 1980. Fetched directly from UIDAI.
+                    <p className="text-slate-500 text-[11px]">
+                      e-Aadhaar verification record from Unique Identification Authority of India.
                     </p>
                   </div>
                 </div>
 
-                {hasAadhaar && (
-                  <div className="mt-3 pt-3 border-t border-green-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                {aadhaarDoc && (
+                  <div className="mt-3 pt-3 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
                     <div>
-                      <span className="text-slate-400">Issuer:</span> Unique Identification Authority of India (UIDAI)
+                      Name on Aadhaar: <strong className="text-slate-800">{aadhaarDoc.metadata?.nameInDoc}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-400">Digital Signature:</span> SHA256withRSA (Valid)
+                      Signature: <span className="font-medium text-emerald-700">SHA256withRSA Valid</span>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Document 2: Class X Certificate (Date of Birth Proof) */}
+              {/* Document 2: Class X Certificate */}
               <div
-                className={`p-4 rounded-xl border transition-all text-xs ${
-                  hasClassX
-                    ? "border-green-200 bg-green-50/40"
-                    : "border-slate-200 bg-slate-50/50"
+                className={`p-4 rounded-lg border transition-colors ${
+                  hasClassX ? "border-slate-200 bg-slate-50/50" : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">Proof of Date of Birth (Class X Certificate)</span>
+                      <span className="font-semibold text-slate-900 text-xs">Proof of Date of Birth (Class X Marksheet)</span>
                       {hasClassX ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 border border-green-200">
-                          VERIFIED
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <Check className="w-3 h-3" /> Linked via Secondary Board
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">
-                          NOT ATTACHED
+                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                          Not Linked
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-600 text-[11px]">
-                      CBSE / ICSE / State Board matriculation certificate used to substantiate Non-ECR status and DOB.
+                    <p className="text-slate-500 text-[11px]">
+                      Secondary examination certificate for non-ECR verification and date of birth validation.
                     </p>
                   </div>
                 </div>
 
-                {hasClassX && (
-                  <div className="mt-3 pt-3 border-t border-green-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                {classXDoc && (
+                  <div className="mt-3 pt-3 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
                     <div>
-                      <span className="text-slate-400">Issuer:</span> Educational Board
+                      Name on Record: <strong className="text-slate-800">{classXDoc.metadata?.nameInDoc}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-400">Status:</span> Matched with DOB {currentApp.profile.dateOfBirth}
+                      DOB on Record: <strong className="text-slate-800">{classXDoc.metadata?.dobInDoc}</strong>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Mismatch Warning Alert if any */}
+            {/* Calm Discrepancy Note */}
             {currentApp.flags.hasNameMismatch && (
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-3 text-xs text-amber-900">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold">Demographic Discrepancy Flagged</h4>
-                  <p className="mt-0.5 leading-relaxed">
-                    A minor name difference was detected between your self-reported profile and one of your verified certificates. This application has been flagged for operator discretion and manual verification. You can still proceed with submission.
-                  </p>
+              <div className="p-3.5 rounded-lg bg-amber-50/60 border border-amber-200/80 text-xs text-amber-900 space-y-1">
+                <div className="font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  Minor Name Variation Detected
                 </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed pl-5">
+                  The name on your Class X record contains customary initials. The verification officer will review and confirm this during application audit. You may submit your application as scheduled.
+                </p>
               </div>
             )}
 
-            {/* Submission Block */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Submission Section */}
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs text-slate-500">
                 {currentApp.status === "SUBMITTED" ? (
-                  <span className="text-blue-700 font-semibold flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4 text-blue-600" />
-                    Application successfully lodged on {new Date(currentApp.submittedAt || "").toLocaleDateString()}.
+                  <span className="text-slate-800 font-medium">
+                    Application was submitted on {new Date(currentApp.submittedAt || "").toLocaleDateString()}.
                   </span>
                 ) : (
-                  <span>
-                    Once submitted, your application and verified documents will be audited by the assistance operator.
-                  </span>
+                  <span>Ensure your documents are linked before final submission.</span>
                 )}
               </div>
 
@@ -450,10 +456,10 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
                     type="button"
                     onClick={handleSubmitApplication}
                     disabled={!canSubmit || isSubmitting}
-                    className="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold shadow transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    {isSubmitting ? "Submitting..." : "Submit Application"}
+                    <span>{isSubmitting ? "Submitting..." : "Submit Application"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}
             </div>
@@ -461,7 +467,7 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
         </div>
       </div>
 
-      {/* DigiLocker Consent Modal */}
+      {/* DigiLocker Modal */}
       <DigiLockerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
