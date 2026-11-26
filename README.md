@@ -1,9 +1,5 @@
 # Passport Application & Tracking Assistance with DigiLocker
 
-> **Technical Assessment Submission — Assignment 04 (v1.3 — 2026-11-23)**  
-> **Prepared for:** Anshumat Foundation Technical Evaluation Team  
-> **Submission Deadline:** 27 November 2026
-
 ---
 
 ## ⚠️ Important Boundary Directives & Compliance Notice
