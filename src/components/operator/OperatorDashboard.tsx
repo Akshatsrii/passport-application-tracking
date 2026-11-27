@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import {
   PassportApplication,
+  ApplicationDocument,
 } from "@/types";
+import { CertificateModal } from "../applicant/CertificateModal";
 import {
   Check,
   AlertCircle,
@@ -14,6 +16,7 @@ import {
   FileCheck,
   Search,
   Filter,
+  Eye,
 } from "lucide-react";
 
 interface OperatorDashboardProps {
@@ -33,6 +36,7 @@ export const OperatorDashboard: React.FC<OperatorDashboardProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [remarks, setRemarks] = useState<string>("");
   const [checkedDocs, setCheckedDocs] = useState<string[]>([]);
+  const [inspectDoc, setInspectDoc] = useState<ApplicationDocument | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -332,18 +336,32 @@ export const OperatorDashboard: React.FC<OperatorDashboardProps> = ({
                 <span className="text-xs font-medium text-slate-700">Checklist Verification Confirmation:</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {activeApp.documents.map((doc) => (
-                    <label
+                    <div
                       key={doc.id}
-                      className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 text-xs hover:bg-slate-50 transition-colors"
                     >
-                      <input
-                        type="checkbox"
-                        checked={checkedDocs.includes(doc.id)}
-                        onChange={() => toggleDocChecked(doc.id)}
-                        className="rounded text-blue-600"
-                      />
-                      <span className="font-medium text-slate-800 truncate">{doc.title}</span>
-                    </label>
+                      <label className="flex items-center gap-2 cursor-pointer flex-1 truncate">
+                        <input
+                          type="checkbox"
+                          checked={checkedDocs.includes(doc.id)}
+                          onChange={() => toggleDocChecked(doc.id)}
+                          className="rounded text-blue-600"
+                        />
+                        <span className="font-medium text-slate-800 truncate">{doc.title}</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInspectDoc(doc);
+                        }}
+                        className="text-[11px] text-blue-700 hover:text-blue-900 font-medium ml-2 shrink-0 inline-flex items-center gap-1"
+                        title="View raw verified certificate"
+                      >
+                        <Eye className="w-3 h-3" />
+                        Inspect
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -438,6 +456,13 @@ export const OperatorDashboard: React.FC<OperatorDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Certificate Inspection Modal */}
+      <CertificateModal
+        isOpen={!!inspectDoc}
+        document={inspectDoc}
+        onClose={() => setInspectDoc(null)}
+      />
     </div>
   );
 };

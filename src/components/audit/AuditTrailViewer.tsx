@@ -8,6 +8,9 @@ import {
   Search,
   ShieldCheck,
   AlertCircle,
+  Download,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 
 export const AuditTrailViewer: React.FC = () => {
@@ -15,9 +18,11 @@ export const AuditTrailViewer: React.FC = () => {
   const [integrity, setIntegrity] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [filterAppId, setFilterAppId] = useState<string>("");
+  const [isTampered, setIsTampered] = useState<boolean>(false);
 
   const fetchLogs = async () => {
     setIsLoading(true);
+    setIsTampered(false);
     try {
       const url = filterAppId ? `/api/audit-logs?applicationId=${filterAppId}` : "/api/audit-logs";
       const res = await fetch(url);
@@ -37,6 +42,38 @@ export const AuditTrailViewer: React.FC = () => {
     fetchLogs();
   }, [filterAppId]);
 
+  // Demonstration feature: Simulates tampering with a block in the immutable chain
+  const handleSimulateTamper = () => {
+    if (logs.length < 2) return;
+    setIsTampered(true);
+    // Alter block #1's checksum to simulate data tampering
+    const tamperedLogs = [...logs];
+    const targetIdx = Math.floor(tamperedLogs.length / 2);
+    tamperedLogs[targetIdx] = {
+      ...tamperedLogs[targetIdx],
+      checksum: "f83a000000000000000000000000000000000000000000000000000000000000",
+      details: { ...tamperedLogs[targetIdx].details, unauthorizedModification: true },
+    };
+    setLogs(tamperedLogs);
+    setIntegrity({
+      isChainIntact: false,
+      verifiedRecordsCount: tamperedLogs.length,
+      corruptedLogId: tamperedLogs[targetIdx].id,
+      algorithm: "SHA-256 Chained Hash Sequence",
+      tamperDetail: `Hash mismatch at block ID ${tamperedLogs[targetIdx].id}. Calculated chain breaks here.`,
+    });
+  };
+
+  const handleExportJson = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `passport_audit_trail_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   return (
     <div className="space-y-4">
       {/* Header Bar */}
@@ -48,7 +85,7 @@ export const AuditTrailViewer: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <input
             type="text"
             placeholder="Filter by App ID..."
@@ -63,27 +100,68 @@ export const AuditTrailViewer: React.FC = () => {
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-600" : "text-slate-400"}`} />
             Refresh
           </button>
+          <button
+            onClick={handleExportJson}
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center gap-1.5 transition-colors"
+            title="Export audit log as JSON"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            Export JSON
+          </button>
         </div>
       </div>
 
       {/* Integrity Pill Banner */}
       {integrity && (
-        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-700 shadow-xs">
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border text-xs gap-3 ${
+            integrity.isChainIntact
+              ? "bg-white border-slate-200 text-slate-700 shadow-xs"
+              : "bg-red-50 border-red-200 text-red-900"
+          }`}
+        >
           <div className="flex items-center gap-2">
             {integrity.isChainIntact ? (
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             ) : (
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
             )}
-            <span className="font-medium text-slate-900">
-              {integrity.isChainIntact ? "Cryptographic Chain Verified" : "Chain Integrity Issue"}
-            </span>
-            <span className="text-slate-400">•</span>
-            <span className="text-slate-500">{integrity.verifiedRecordsCount} records validated via SHA-256 hash chaining</span>
+            <div>
+              <span className="font-semibold text-slate-900">
+                {integrity.isChainIntact
+                  ? "Cryptographic Chain Verified"
+                  : "Tamper Warning: Hash Mismatch Detected!"}
+              </span>
+              <span className="text-slate-500 ml-2">
+                {integrity.isChainIntact
+                  ? `${integrity.verifiedRecordsCount} records validated sequentially.`
+                  : integrity.tamperDetail}
+              </span>
+            </div>
           </div>
-          <span className="font-mono text-[11px] text-slate-400 hidden sm:inline">
-            HMAC / SHA-256
-          </span>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {!isTampered ? (
+              <button
+                type="button"
+                onClick={handleSimulateTamper}
+                className="text-[11px] font-medium text-slate-600 hover:text-slate-900 underline underline-offset-2 flex items-center gap-1"
+                title="Test how the cryptographic engine catches unauthorized block alterations"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                Simulate Tamper Attack
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={fetchLogs}
+                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 bg-emerald-100 px-2 py-0.5 rounded"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Restore Ledger Integrity
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -104,8 +182,15 @@ export const AuditTrailViewer: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {logs.map((log) => {
+                const isCorrupted = !integrity?.isChainIntact && log.id === integrity?.corruptedLogId;
+
                 return (
-                  <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr
+                    key={log.id}
+                    className={`transition-colors ${
+                      isCorrupted ? "bg-red-50/80 font-medium" : "hover:bg-slate-50/60"
+                    }`}
+                  >
                     <td className="py-2.5 px-3.5 whitespace-nowrap text-slate-500 font-mono text-[11px]">
                       {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </td>
@@ -133,8 +218,14 @@ export const AuditTrailViewer: React.FC = () => {
                     <td className="py-2.5 px-3.5 max-w-xs text-slate-500 text-[11px] truncate">
                       {log.details.notes || JSON.stringify(log.details)}
                     </td>
-                    <td className="py-2.5 px-3.5 whitespace-nowrap font-mono text-[10px] text-slate-400">
-                      {log.checksum.slice(0, 12)}...
+                    <td className="py-2.5 px-3.5 whitespace-nowrap font-mono text-[10px]">
+                      {isCorrupted ? (
+                        <span className="text-red-700 font-bold bg-red-100 px-1 rounded">
+                          {log.checksum.slice(0, 12)}... (CORRUPTED)
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">{log.checksum.slice(0, 12)}...</span>
+                      )}
                     </td>
                   </tr>
                 );

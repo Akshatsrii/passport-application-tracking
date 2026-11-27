@@ -4,9 +4,12 @@ import React, { useState } from "react";
 import {
   PassportApplication,
   DocumentType,
+  ApplicationDocument,
 } from "@/types";
 import { TrackingTimeline } from "./TrackingTimeline";
 import { DigiLockerModal } from "./DigiLockerModal";
+import { CertificateModal } from "./CertificateModal";
+import { ApplicationSlipModal } from "./ApplicationSlipModal";
 import {
   FileText,
   ShieldCheck,
@@ -16,7 +19,8 @@ import {
   ArrowRight,
   Shield,
   RotateCw,
-  Lock,
+  Eye,
+  Download,
 } from "lucide-react";
 
 interface ApplicantPortalProps {
@@ -35,6 +39,8 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
+  const [selectedDocForModal, setSelectedDocForModal] = useState<ApplicationDocument | null>(null);
+  const [isArnModalOpen, setIsArnModalOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const currentApp = applications.find((a) => a.id === selectedAppId) || applications[0];
@@ -374,13 +380,19 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
                 </div>
 
                 {aadhaarDoc && (
-                  <div className="mt-3 pt-3 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
+                  <div className="mt-3 pt-3 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-600">
                     <div>
-                      Name on Aadhaar: <strong className="text-slate-800">{aadhaarDoc.metadata?.nameInDoc}</strong>
+                      Name on Aadhaar: <strong className="text-slate-800">{aadhaarDoc.metadata?.nameInDoc}</strong> •{" "}
+                      <span className="font-medium text-emerald-700">SHA256withRSA Valid</span>
                     </div>
-                    <div>
-                      Signature: <span className="font-medium text-emerald-700">SHA256withRSA Valid</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDocForModal(aadhaarDoc)}
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:text-blue-900 self-start sm:self-auto"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View Certificate
+                    </button>
                   </div>
                 )}
               </div>
@@ -412,13 +424,19 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
                 </div>
 
                 {classXDoc && (
-                  <div className="mt-3 pt-3 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
+                  <div className="mt-3 pt-3 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-600">
                     <div>
-                      Name on Record: <strong className="text-slate-800">{classXDoc.metadata?.nameInDoc}</strong>
+                      Name on Record: <strong className="text-slate-800">{classXDoc.metadata?.nameInDoc}</strong> • DOB:{" "}
+                      <strong className="text-slate-800">{classXDoc.metadata?.dobInDoc}</strong>
                     </div>
-                    <div>
-                      DOB on Record: <strong className="text-slate-800">{classXDoc.metadata?.dobInDoc}</strong>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDocForModal(classXDoc)}
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:text-blue-900 self-start sm:self-auto"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View Certificate
+                    </button>
                   </div>
                 )}
               </div>
@@ -440,10 +458,20 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
             {/* Submission Section */}
             <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs text-slate-500">
-                {currentApp.status === "SUBMITTED" ? (
-                  <span className="text-slate-800 font-medium">
-                    Application was submitted on {new Date(currentApp.submittedAt || "").toLocaleDateString()}.
-                  </span>
+                {currentApp.status === "SUBMITTED" || currentApp.status === "APPROVED" || currentApp.status === "UNDER_OPERATOR_REVIEW" ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-800 font-medium">
+                      Application submitted on {new Date(currentApp.submittedAt || currentApp.updatedAt).toLocaleDateString()}.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsArnModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 underline underline-offset-2"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download ARN Slip
+                    </button>
+                  </div>
                 ) : (
                   <span>Ensure your documents are linked before final submission.</span>
                 )}
@@ -451,7 +479,10 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
 
               {currentApp.status !== "SUBMITTED" &&
                 currentApp.status !== "UNDER_OPERATOR_REVIEW" &&
-                currentApp.status !== "APPROVED" && (
+                currentApp.status !== "APPROVED" &&
+                currentApp.status !== "POLICE_VERIFICATION_SIMULATED" &&
+                currentApp.status !== "PASSPORT_PRINTED_SIMULATED" &&
+                currentApp.status !== "DISPATCHED_SIMULATED" && (
                   <button
                     type="button"
                     onClick={handleSubmitApplication}
@@ -474,6 +505,20 @@ export const ApplicantPortal: React.FC<ApplicantPortalProps> = ({
         onGrantConsent={handleGrantConsent}
         applicantName={currentApp.profile.fullName}
         maskedAadhaar={currentApp.profile.aadhaarNumberMasked}
+      />
+
+      {/* Verified Certificate Modal */}
+      <CertificateModal
+        isOpen={!!selectedDocForModal}
+        document={selectedDocForModal}
+        onClose={() => setSelectedDocForModal(null)}
+      />
+
+      {/* Official ARN Slip Modal */}
+      <ApplicationSlipModal
+        isOpen={isArnModalOpen}
+        application={currentApp}
+        onClose={() => setIsArnModalOpen(false)}
       />
     </div>
   );
