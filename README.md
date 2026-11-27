@@ -1,7 +1,7 @@
 # Passport Application & Tracking Assistance with DigiLocker
 
----
 
+---
 ## ⚠️ Important Boundary Directives & Compliance Notice
 
 | Rule | Directives & Adherence in this Project |
